@@ -16,7 +16,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as ec
 
@@ -81,15 +81,23 @@ class Bot:
     def reply(self, message):
         try:
             # hover
-            el = message.find_element_by_class_name("_3mSPV")
+            el = self.msg_element.find_element_by_class_name("_3mSPV")
             ActionChains(self.driver).move_to_element(el).perform()
+            # click options
+            self.driver.find_element_by_xpath(
+                '//div[@aria-label="Context Menu"]'
+            ).click()
+            WebDriverWait(self.driver, 10).until(
+                ec.visibility_of_element_located((By.CLASS_NAME, "_1MZM5"))
+            )
+
             for choice in self.driver.find_elements_by_class_name("_1MZM5"):
                 if choice.text == "Reply":
                     choice.click()
                     sleep(0.1)
                     break
             WebDriverWait(self.driver, 10).until(
-                ec.visibility_of_element_located((By.CLASS_NAME, "_1M6AF"))
+                ec.visibility_of_element_located((By.CLASS_NAME, "_1MZM5"))
             )
             sleep(0.5)
             # choose reply
@@ -100,6 +108,8 @@ class Bot:
                     break
 
             self.send_message(message)
+        except TimeoutException as e:
+            logger.error(e)
         except Exception as e:
             logger.error(f"Erorr: in `reply`: {e}")
 
