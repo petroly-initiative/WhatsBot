@@ -6,6 +6,7 @@ mehtods as commands, by matching the messages content.
 import logging
 import whatsapp
 
+CHAT_NAME = "You"
 
 # Set up logging
 logging.basicConfig(
@@ -20,7 +21,7 @@ bot = whatsapp.Bot()
 
 # Set the chat name for the Bot
 # You can set it manulay with mouse
-bot.set_chat(chat_name="Ammar Alfaifi")
+bot.set_chat(CHAT_NAME)
 
 
 # match the command with its methods to invoke
