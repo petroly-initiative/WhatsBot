@@ -61,13 +61,13 @@ def handle(msg: str):
         elif msg.startswith("dalle\n"):
             bot.ask_DALL_E(msg.replace("dalle\n", ""))
 
-        elif msg == "delete" and bot.is_sender_me():
+        elif msg == "delete" and bot.is_sender_me:
             if bot.msg_element.text not in read_done:
                 read_done.append(bot.msg_element.text)
                 msg_el = bot.go_to_replied_message(bot.msg_element)
                 bot.delete_message(msg_el)
 
-        elif msg == "kickout" and bot.is_sender_me():
+        elif msg == "kickout" and bot.is_sender_me:
             if bot.msg_element.text not in read_done:
                 read_done.append(bot.msg_element.text)
                 msg_el = bot.go_to_replied_message(bot.msg_element)
