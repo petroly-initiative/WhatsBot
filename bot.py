@@ -6,7 +6,7 @@ mehtods as commands, by matching the messages content.
 import logging
 import whatsapp
 
-CHAT_NAME = "You"
+CHAT_NAME = "Ammar Alfaifi"
 
 # Set up logging
 logging.basicConfig(
@@ -32,7 +32,11 @@ COMMANDS = {
     "gpt": bot.ask_gpt,
     "chat": bot.ask_chat_gpt,
     "dalle": bot.ask_DALL_E,
+    "kickout": bot.remove_participant,
+    "delete": bot.delete_message,
 }
+
+read_done = []
 
 
 def handle(msg: str):
@@ -51,11 +55,23 @@ def handle(msg: str):
         elif msg.startswith("gpt"):
             bot.ask_gpt(msg.replace("/gpt\n", ""), 500)
 
-        elif msg.startswith("chat"):
+        elif msg.startswith("chat\n"):
             bot.ask_chat_gpt(msg.replace("chat\n", ""))
 
-        elif msg.startswith("dalle"):
+        elif msg.startswith("dalle\n"):
             bot.ask_DALL_E(msg.replace("dalle\n", ""))
+
+        elif msg == "delete" and bot.is_sender_me():
+            if bot.msg_element.text not in read_done:
+                read_done.append(bot.msg_element.text)
+                msg_el = bot.go_to_replied_message(bot.msg_element)
+                bot.delete_message(msg_el)
+
+        elif msg == "kickout" and bot.is_sender_me():
+            if bot.msg_element.text not in read_done:
+                read_done.append(bot.msg_element.text)
+                msg_el = bot.go_to_replied_message(bot.msg_element)
+                bot.remove_participant(bot.get_contact(msg_el))
 
 
 # start looping forever

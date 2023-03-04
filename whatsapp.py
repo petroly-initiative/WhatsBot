@@ -7,13 +7,18 @@ all the mehtods to handle commands.
 import logging
 import os
 from time import sleep
+from typing import List
 
 import openai
 import openai.error
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as ec
 
 
 os.system("rm -rf profile")  # REMOVE OLD PROFILE
@@ -54,36 +59,38 @@ class Bot:
         if OPENAI_TOKEN:
             openai.api_key = OPENAI_TOKEN
             self.conversations = []
+        self.messages = []
         self.options = webdriver.ChromeOptions()
         self.options.add_argument(r"user-data-dir={}".format(self.profile))
         # start webdriver
         self.driver = webdriver.Chrome(self.chromedriver, chrome_options=self.options)
         self.driver.get(WHATSAPP_WEB)
-        self.driver.implicitly_wait(5)
+        self.driver.implicitly_wait(3)
 
-    def get_last_message(self):
+    def get_last_message(self) -> str:
         try:
             # get the last message
-            messages = self.driver.find_elements_by_class_name(CLASSES["msg_text"])
-            self.msg_element = messages[-1].find_element_by_css_selector(
-                XPATH["left_msg"]
-            )
-
-            return self.msg_element.text
+            self.messages = self.get_all_visible_messages()
+            self.msg_element = self.messages[-1]
+            return self.get_message_text(self.msg_element)
 
         except Exception as e:
             logger.error(f"Error getting message: {e}")
+            return ""
 
     def reply(self, message):
         try:
             # hover
-            ActionChains(self.driver).move_to_element(self.msg_element).perform()
-            try:
-                # click options
-                self.driver.find_element_by_class_name("_2T2Kt").click()
-            except NoSuchElementException:
-                self.driver.find_element_by_class_name("_3Gzl9").click()
-
+            el = message.find_element_by_class_name("_3mSPV")
+            ActionChains(self.driver).move_to_element(el).perform()
+            for choice in self.driver.find_elements_by_class_name("_1MZM5"):
+                if choice.text == "Reply":
+                    choice.click()
+                    sleep(0.1)
+                    break
+            WebDriverWait(self.driver, 10).until(
+                ec.visibility_of_element_located((By.CLASS_NAME, "_1M6AF"))
+            )
             sleep(0.5)
             # choose reply
             for choice in self.driver.find_elements_by_class_name("_1MZM5"):
@@ -117,7 +124,7 @@ class Bot:
             self.send_btn_element.click()
             sleep(0.5)
         except Exception as e:
-            logger.error("Error send message", e)
+            logger.error(f"Error send message: {e}")
 
     def send_media(self, file):
         try:
@@ -156,6 +163,16 @@ class Bot:
             self.search_chat_element.clear()
         except Exception as e:
             raise e
+
+    def loop(self, handle):
+
+        while True:
+            if self.is_ready():
+                msg = self.get_last_message()
+                if msg:
+                    handle(msg)
+
+            sleep(1)
 
     def ask_gpt(self, msg, max_tokens=50):
 
@@ -270,12 +287,137 @@ class Bot:
 
         self.reply(image_url)
 
-    def loop(self, handle):
+    def is_reply(self, msg_box: WebElement) -> bool:
+        """Wehther this message is a reply to another one."""
+        return bool(msg_box.find_elements_by_class_name("_1hl2r"))
 
-        while True:
-            if self.is_ready():
-                msg = self.get_last_message()
-                if msg:
-                    handle(msg)
+    def get_all_visible_messages(self) -> List[WebElement]:
+        return self.driver.find_element_by_class_name(
+            "_2Ex_b"
+        ).find_elements_by_class_name("_7GVCb")
 
-            sleep(1)
+    def get_replied_text(self, msg_box: WebElement) -> str:
+        try:
+            return msg_box.find_element_by_class_name("_37DQv").text
+        except Exception as e:
+            print(e)
+
+    def go_to_replied_message(self, msg_box: WebElement) -> WebElement | None:
+        try:
+            msg_box.find_element_by_class_name("_37DQv").click()
+            detected = self.driver.find_elements_by_class_name("velocity-animating")
+            for el in detected:
+                try:
+                    if "_7GVCb" in el.get_attribute("class"):
+                        return el
+                except:
+                    pass
+
+        except Exception as e:
+            print(f"I couldn't find the replied message: {e}")
+
+    @property
+    def is_sender_me(self) -> bool:
+        return "message-out" in self.msg_element.get_attribute("class")
+
+    def get_message_text(self, msg_box: WebElement) -> str:
+        return msg_box.find_element_by_class_name("_21Ahp").text
+
+    def get_contact(self, msg_box) -> str:
+        return msg_box.find_element_by_class_name("_3FuDI").text
+
+    def find_message_element(self, context: str, messages) -> WebElement | None:
+        for el in reversed(messages):
+            try:
+                if context in self.get_message_text(el):
+                    return el
+            except:
+                pass
+
+    def remove_participant(self, name: str) -> bool:
+        # chat option
+        # bot.driver.find_element_by_class_name('kiiy14zj')
+        WebDriverWait(self.driver, 10).until(
+            ec.visibility_of_element_located((By.CLASS_NAME, "kiiy14zj"))
+        ).click()
+
+        # choose an option
+        WebDriverWait(self.driver, 10).until(
+            ec.visibility_of_all_elements_located((By.CLASS_NAME, "_1MZM5"))
+        )[0].click()
+
+        # Click search icon
+        options = WebDriverWait(self.driver, 10).until(
+            ec.visibility_of_all_elements_located(
+                (By.XPATH, '//span[@data-icon="search"]')
+            )
+        )
+        options[1].click()
+        # write
+        self.driver.find_element_by_xpath(
+            '//div[@data-testid="chat-list-search"]'
+        ).send_keys(name)
+        sleep(1)
+        # search for the box el
+        els = self.driver.find_element_by_xpath(
+            '//div[@data-testid="popup-contents"]'
+        ).find_elements_by_tag_name("span")
+        for el in els:
+            if name in el.text:
+                el.click()
+        # Click remove
+        options = WebDriverWait(self.driver, 10).until(
+            ec.visibility_of_all_elements_located((By.CLASS_NAME, "FCS6Q"))
+        )
+        for opt in options:
+            if opt.text == "Remove":
+                opt.click()
+
+        self.send_message("Done")
+        return True
+
+    def delete_message(self, message: WebElement) -> None:
+        if not message:
+            return
+        try:
+            # hover
+            el = message.find_element_by_class_name("_3mSPV")
+            ActionChains(self.driver).move_to_element(el).perform()
+            # click options
+            self.driver.find_element_by_xpath(
+                '//div[@aria-label="Context Menu"]'
+            ).click()
+            WebDriverWait(self.driver, 10).until(
+                ec.visibility_of_element_located((By.CLASS_NAME, "_1MZM5"))
+            )
+            # choose delete
+            for choice in self.driver.find_elements_by_class_name("_1MZM5"):
+                if choice.text == "Delete message":
+                    choice.click()
+                    sleep(0.1)
+                    break
+            WebDriverWait(self.driver, 10).until(
+                ec.visibility_of_element_located((By.CLASS_NAME, "_1M6AF"))
+            )
+            # choose delete for everyone
+            succeded = False
+            for choice in self.driver.find_elements_by_class_name("_1M6AF"):
+                if choice.text == "DELETE FOR EVERYONE":
+                    choice.click()
+                    succeded = True
+                    sleep(0.1)
+                    break
+            if not succeded:
+                self.driver.find_element_by_tag_name("html").send_keys(Keys.ESCAPE)
+                sleep(0.5)
+                self.send_message("This message is too old to be deleted.")
+            # scrol back down
+            down_btns = self.driver.find_elements_by_xpath(
+                '//div[@aria-label="Scroll to bottom"]'
+            )
+            if down_btns:
+                down_btns[0].click()
+
+            self.send_message("Deleted")
+        except Exception as e:
+            print(f"Erorr: in `delete_message`: {e}")
