@@ -10,10 +10,10 @@ CHAT_NAME = "Ammar Alfaifi"
 
 # Set up logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     filename="bot.log",
     filemode="w",
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(levelname)s in %(filename)s `%(funcName)s` - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,6 @@ def handle(msg: str):
     it gets called every 1s"""
 
     if msg:
-
         if msg == "/start":
             bot.send_message("Hello!")
 
@@ -53,13 +52,16 @@ def handle(msg: str):
             bot.send_media("/path/to/imagem.jpg")
 
         elif msg.startswith("gpt"):
-            bot.ask_gpt(msg.replace("/gpt\n", ""), 500)
+            print(msg)
+            bot.ask_gpt(msg.replace("/gpt", "").strip(), 500)
 
-        elif msg.startswith("chat\n"):
-            bot.ask_chat_gpt(msg.replace("chat\n", ""))
+        elif msg.startswith("chat"):
+            print(msg)
+            bot.ask_chat_gpt(msg.replace("chat", "").strip())
 
-        elif msg.startswith("dalle\n"):
-            bot.ask_DALL_E(msg.replace("dalle\n", ""))
+        elif msg.startswith("dalle"):
+            print(msg)
+            bot.ask_DALL_E(msg.replace("dalle", "").strip())
 
         elif msg == "delete" and bot.is_sender_me:
             if bot.msg_element.text not in read_done:

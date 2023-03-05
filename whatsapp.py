@@ -87,16 +87,7 @@ class Bot:
             self.driver.find_element_by_xpath(
                 '//div[@aria-label="Context Menu"]'
             ).click()
-            WebDriverWait(self.driver, 10).until(
-                ec.visibility_of_element_located((By.CLASS_NAME, "_1MZM5"))
-            )
-
-            for choice in self.driver.find_elements_by_class_name("_1MZM5"):
-                if choice.text == "Reply":
-                    choice.click()
-                    sleep(0.1)
-                    break
-            WebDriverWait(self.driver, 10).until(
+            WebDriverWait(self.driver, 5).until(
                 ec.visibility_of_element_located((By.CLASS_NAME, "_1MZM5"))
             )
             sleep(0.5)
@@ -106,7 +97,7 @@ class Bot:
                     choice.click()
                     sleep(0.1)
                     break
-
+            logger.info("A message is selected.")
             self.send_message(message)
         except TimeoutException as e:
             logger.error(e)
@@ -115,7 +106,7 @@ class Bot:
 
     def send_message(self, msg):
         try:
-            sleep(1)
+            sleep(0.1)
             # select box message and typing
             self.msg_box_element = self.driver.find_element_by_class_name(
                 CLASSES["msg_box"]
@@ -213,7 +204,7 @@ class Bot:
             self.reply("A fatal error ocurred")
             return
 
-        text = response.to_dict()["choices"][0].to_dict()["text"]
+        text = self._clean_text(response.to_dict()["choices"][0].to_dict()["text"])
         self.reply(f"GPT:{text}")
 
     def construct_conversation(self, prompt: str):
@@ -241,6 +232,10 @@ class Bot:
         # 4096 tokens for gpt-3.5-turbo-0301
         if completion.usage.total_tokens > 3000:
             self.conversations.pop(0)
+
+    @staticmethod
+    def _clean_text(text: str) -> str:
+        return text.replace("\t", "")
 
     def ask_chat_gpt(self, msg):
 
@@ -270,7 +265,8 @@ class Bot:
             return
 
         self.store_response(completion)
-        self.reply(f"Chat:\n{completion.choices[0].message.content}")
+        cleaned = self._clean_text(completion.choices[0].message.content)
+        self.reply(f"Chat:\n{cleaned}")
 
     def ask_DALL_E(self, msg):
 
@@ -280,7 +276,7 @@ class Bot:
 
         except openai.InvalidRequestError as e:
             logger.error(e)
-            self.reply(e)
+            self.reply(str(e))
             return
 
         except openai.APIError as e:
