@@ -235,19 +235,26 @@ class Bot:
 
     @staticmethod
     def _clean_text(text: str) -> str:
-        return text.replace("\t", "")
+        return text.replace("\t", " " * 4).replace("\b", "")
 
-    def ask_chat_gpt(self, msg):
+    def ask_chat_gpt(self, msg, new_thread=False):
 
         logger.info(f"Prompe: {msg}")
         if not OPENAI_TOKEN:
             print("Make sure you setup OpenAI token.")
 
         try:
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=self.construct_conversation(msg),
-            )
+            if new_thread:
+
+                completion = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=str(msg),
+                )
+            else:
+                completion = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=self.construct_conversation(msg),
+                )
 
         except openai.InvalidRequestError as e:
             logger.error(e)
