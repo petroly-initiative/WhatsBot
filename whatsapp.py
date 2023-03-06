@@ -205,7 +205,7 @@ class Bot:
             return
 
         text = self._clean_text(response.to_dict()["choices"][0].to_dict()["text"])
-        self.reply(f"GPT:{text}")
+        self.reply(text)
 
     def construct_conversation(self, prompt: str):
         """This is to help constructing
@@ -273,7 +273,7 @@ class Bot:
 
         self.store_response(completion)
         cleaned = self._clean_text(completion.choices[0].message.content)
-        self.reply(f"Chat:\n{cleaned}")
+        self.reply(cleaned)
 
     def ask_DALL_E(self, msg):
 

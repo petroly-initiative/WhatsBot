@@ -6,7 +6,7 @@ mehtods as commands, by matching the messages content.
 import logging
 import whatsapp
 
-CHAT_NAME = "Ammar Alfaifi"
+CHAT_NAME = "Petroly Bot"
 
 # Set up logging
 logging.basicConfig(
