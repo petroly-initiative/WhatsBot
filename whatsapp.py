@@ -163,7 +163,7 @@ class Bot:
             self.chat_element.click()
             self.search_chat_element.clear()
         except Exception as e:
-            raise e
+            logger.warn(f"Issue in setting chat {chat_name}, {e}")
 
     def loop(self, handle):
 
