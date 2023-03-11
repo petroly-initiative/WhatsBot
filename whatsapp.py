@@ -31,9 +31,9 @@ WHATSAPP_WEB = "https://web.whatsapp.com/"
 # You shouldn't need to change this
 CLASSES = {
     "msg_text": "_21Ahp",
-    "msg_box": "fd365im1",
+    "msg_box": "_3Uu1_",
     "send_button": "epia9gcq",
-    "search_box": "Er7QU",
+    "search_box": "iq0m558w",
     "loading": "_2dfCc",
 }
 
