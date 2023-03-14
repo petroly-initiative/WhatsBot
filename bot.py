@@ -55,13 +55,13 @@ def handle(msg: str):
             print(msg)
             bot.ask_gpt(msg.replace("/gpt", "").strip(), 500)
 
-        elif msg.startswith("chat"):
-            print(msg)
-            bot.ask_chat_gpt(msg.replace("chat", "").strip())
-
         elif msg.startswith("chatgpt"):
             print(msg)
             bot.ask_chat_gpt(msg.replace("chatgpt", "").strip(), new_thread=True)
+
+        elif msg.startswith("chat"):
+            print(msg)
+            bot.ask_chat_gpt(msg.replace("chat", "").strip())
 
         elif msg.startswith("dalle"):
             print(msg)

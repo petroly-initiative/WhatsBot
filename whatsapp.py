@@ -33,7 +33,7 @@ CLASSES = {
     "msg_text": "_21Ahp",
     "msg_box": "_3Uu1_",
     "send_button": "epia9gcq",
-    "search_box": "iq0m558w",
+    "search_box": "_2vDPL",
     "loading": "_2dfCc",
 }
 
@@ -142,7 +142,11 @@ class Bot:
         """By checking if the seach box is availble
         we know it's ready to chat"""
 
-        return bool(self.driver.find_elements_by_class_name(CLASSES["search_box"]))
+        return bool(
+            self.driver.find_elements_by_xpath(
+                "//div[@data-testid='chat-list-search-container']"
+            )
+        )
 
     def set_chat(self, chat_name):
         """Open specific chat"""
@@ -152,9 +156,9 @@ class Bot:
 
         sleep(5)
         try:
-            self.search_chat_element = self.driver.find_element_by_class_name(
-                CLASSES["search_box"]
-            )  #
+            self.search_chat_element = self.driver.find_element_by_xpath(
+                "//div[@data-testid='chat-list-search']"
+            )
             self.search_chat_element.send_keys(chat_name)
             sleep(2)
             self.chat_element = self.driver.find_element_by_xpath(
@@ -230,7 +234,7 @@ class Bot:
 
         # to prevent excceding the max tokens:
         # 4096 tokens for gpt-3.5-turbo-0301
-        if completion.usage.total_tokens > 3000:
+        if completion.usage.total_tokens > 2000:
             self.conversations.pop(0)
 
     @staticmethod
